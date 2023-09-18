@@ -14,7 +14,6 @@
 <img src="https://img.shields.io/github/languages/top/infamousjoeg/jwt-service?style&color=5D6D7E" alt="GitHub top language" />
 <img src="https://img.shields.io/github/languages/code-size/infamousjoeg/jwt-service?style&color=5D6D7E" alt="GitHub code size in bytes" />
 <img src="https://img.shields.io/github/commit-activity/m/infamousjoeg/jwt-service?style&color=5D6D7E" alt="GitHub commit activity" />
-<img src="https://img.shields.io/github/license/infamousjoeg/jwt-service?style&color=5D6D7E" alt="GitHub license" />
 </div>
 
 ---
