@@ -1,6 +1,6 @@
 <div align="center">
 <h1 align="center">
-<img src="https://raw.githubusercontent.com/PKief/vscode-material-icon-theme/ec559a9f6bfd399b82bb44393651661b08aaf7ba/icons/folder-markdown-open.svg" width="100" />
+<img src="https://github-production-user-asset-6210df.s3.amazonaws.com/1924063/268759062-c6aaca02-5430-4d2d-a087-63cc4853accc.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAIWNJYAX4CSVEH53A%2F20230918%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20230918T195333Z&X-Amz-Expires=300&X-Amz-Signature=b5281423009f009fc2f3e7de21aa62eb38c290b2fcf338f0dc7c4a00f786000a&X-Amz-SignedHeaders=host&actor_id=1924063&key_id=0&repo_id=693238449" width="100" />
 <br>jwt-service
 </h1>
 <h3>◦ Unlocking seamless authentication with jwt-service.</h3>
