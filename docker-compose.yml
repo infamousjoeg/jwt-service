@@ -1,0 +1,51 @@
+version: '3'
+
+services:
+  jwt-service:
+    build: .
+    container_name: jwt-service
+    environment:
+      - VIRTUAL_HOST=yourdomain.com
+      - VIRTUAL_PORT=8080
+      - LETSENCRYPT_HOST=yourdomain.com
+      - LETSENCRYPT_EMAIL=youremail@example.com
+      - JWT_ISSUER=yourdomain.com
+      - JWT_SUBJECT=host/workload/id
+      - JWT_AUDIENCE=example.secretsmgr.cyberark.cloud
+      - JWT_TTL=5
+      - JWKS_KEY_TTL=6
+    networks:
+      - webnet
+
+  nginx-proxy:
+    image: jwilder/nginx-proxy:alpine
+    container_name: nginx-proxy
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - /var/run/docker.sock:/tmp/docker.sock:ro
+      - ./certs:/etc/nginx/certs
+      - ./vhost.d:/etc/nginx/vhost.d
+      - ./html:/usr/share/nginx/html
+    labels:
+      - "com.github.jrcs.letsencrypt_nginx_proxy_companion.nginx_proxy"
+    networks:
+      - webnet
+
+  nginx-proxy-letsencrypt:
+    image: nginxproxy/acme-companion
+    container_name: nginx-proxy-letsencrypt
+    depends_on:
+      - nginx-proxy
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./certs:/etc/nginx/certs
+      - ./vhost.d:/etc/nginx/vhost.d
+      - ./html:/usr/share/nginx/html
+      - ./acme:/etc/acme.sh
+    networks:
+      - webnet
+
+networks:
+  webnet:
