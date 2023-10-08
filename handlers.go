@@ -20,7 +20,7 @@ func JWKSHandler(w http.ResponseWriter, r *http.Request) {
 	// Iterate through each entry in the keyRing.
 	for _, entry := range keyRing {
 		// Construct the JWKS representation for the public key.
-		keyData := map[string]interface{
+		keyData := map[string]interface{}{
 			"kty": "RSA", // Key Type: RSA
 			"alg": "RS256", // Algorithm: RS256
 			"use": "sig", // Key Use: Signature
