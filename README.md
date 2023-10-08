@@ -57,6 +57,7 @@ The "jwt-service" project is a Golang application that serves an HTTP endpoint f
 | **🔀 Version Control** | The project utilizes Git for version control. The codebase is hosted on GitHub, allowing for collaboration, version management, and issue tracking. Further details on specific version control strategies and tools are not mentioned.    |
 | **🔌 Integrations**    | As a standalone JWT service, the codebase does not have explicit integrations with other systems. However, it can be easily integrated into larger systems where JWT authentication/authorization is required.    |
 | **📶 Scalability**     | The system's scalability depends on the underlying infrastructure. Since the codebase is written in Go, it can handle a considerable amount of traffic. It supports horizontal scalability through load balancing.    |
+| **🛡️ Error Handling**   | The codebase includes error handling mechanisms for various scenarios such as reading environment variables, encoding RSA public keys, and generating RSA key pairs. Proper logging of errors ensures traceability and debugging. |
 
 ---
 
@@ -75,6 +76,9 @@ The "jwt-service" project is a Golang application that serves an HTTP endpoint f
 | File                                                                               | Summary                                                                                                                                                                                                                                                                                                                                                                        |
 | ---                                                                                | ---                                                                                                                                                                                                                                                                                                                                                                            |
 | [main.go](https://github.com/infamousjoeg/jwt-service/blob/main/main.go)           | This code is a Golang application that serves an HTTP endpoint to generate JSON Web Tokens (JWTs). It uses RSA key pairs for token signing and periodically rotates the keys based on the provided time-to-live (TTL). The code also exposes a JSON Web Key Set (JWKS) endpoint that provides information about the available public keys for token verification.              |
+| [config.go](https://github.com/infamousjoeg/jwt-service/blob/main/config.go)      | Responsible for reading and setting configuration values from environment variables. It sets important parameters such as JWT issuer, audience, and JWT and JWKS TTLs. |
+| [crypto.go](https://github.com/infamousjoeg/jwt-service/blob/main/crypto.go)      | Contains functions related to key generation and computation of key IDs. It provides mechanisms to manage a key ring of RSA public keys and perform periodic key rotations. |
+| [handlers.go](https://github.com/infamousjoeg/jwt-service/blob/main/handlers.go)  | Defines the HTTP handlers for the JWT generation and JWKS endpoints. It ensures the correct formation of JWTs and JWKS responses. |
 | [Dockerfile](https://github.com/infamousjoeg/jwt-service/blob/main/Dockerfile)     | This code builds a Docker image for a Go application called "jwt-service". It first creates a build artifact using the official Golang image and then copies the necessary files and dependencies. The final Docker image is built from scratch and includes the pre-built binary of the application. It sets a non-root user and specifies the command to run the executable. |
 | [go.mod](https://github.com/infamousjoeg/jwt-service/blob/main/go.mod)             | The code is a module called jwt-service, which primarily focuses on implementing JWT (JSON Web Token) functionalities. It requires the jwt-go package version v3.2.0+incompatible from the dgrijalva/jwt-go GitHub repository.                                                                                                                                                 |
 | [main_test.go](https://github.com/infamousjoeg/jwt-service/blob/main/main_test.go) | This code contains test functions for handling JWKS endpoint and generating JWT. It verifies if the handlers return the expected status codes and checks the validity of the returned key and generated JWT. It can be expanded to include more tests and handle error scenarios.                                                                                              |
@@ -142,11 +146,63 @@ docker compose up -d
 
 #### GET /generate-jwt
 
-Responds with a JSON Web Token (JWT) signed with the current signing key.
+For the `GET /generate-jwt` endpoint, the resulting JWT contains claims for issuer (`iss`), subject (`sub`), audience (`aud`), and expiration time (`exp`). The JWT’s header also contains the Key ID (`kid`) of the signing key.
+
+##### JWT Header
+
+```json
+{
+  “alg”: “RS256”,
+  “typ”: “JWT”,
+  “kid”: “someBase64EncodedKeyID”
+}
+```
+
+##### JWT Payload
+
+```json
+{
+  “iss”: “yourdomain.com”,
+  “sub”: “host/workload/id”,
+  “aud”: “example.secretsmgr.cyberark.cloud”,
+  “exp”: 1671138874
+}
+```
+
+##### Example Response
+
+```
+eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6InNvbWVCYXNlNjRFbmNvZGVkS2V5SUQifQ.eyJpc3MiOiJ5b3VyZG9tYWluLmNvbSIsInN1YiI6Imhvc3Qvd29ya2xvYWQvaWQiLCJhdWQiOiJleGFtcGxlLnNlY3JldHNtZ3IuY3liZXJhcmsuY2xvdWQiLCJleHAiOjE2NzExMzg4NzR9.jfiE2IweaBVdpk2F2A8aIVmxB3Lrf4y25va8GdU8AKP7uXLn5aT4Cz5BZ8wlL6pvkRdcb4NdWMTUH5gwD5qcIw
+```
 
 #### GET /.well-known/jwks.json
 
 Responds with a JSON Web Key Set (JWKS) containing the current signing key's public certificate.
+
+##### Example Response
+
+```json
+{
+  “keys”: [
+    {
+      “kty”: “RSA”,
+      “alg”: “RS256”,
+      “use”: “sig”,
+      “n”: “vZ393bDO6j3...LongBase64EncodedString...QZa3”,
+      “e”: “AQAB”,
+      “kid”: “someBase64EncodedKeyID”
+    },
+    {
+      “kty”: “RSA”,
+      “alg”: “RS256”,
+      “use”: “sig”,
+      “n”: “iLmhs2ZHB1...AnotherLongBase64EncodedString...7ZhFG”,
+      “e”: “AQAB”,
+      “kid”: “anotherBase64EncodedKeyID”
+    }
+  ]
+}
+```
 
 ### 🧪 Running Tests
 ```sh

@@ -3,6 +3,8 @@ package main
 import (
 	"crypto/rand"
 	"crypto/rsa"
+	"crypto/sha256"
+	"encoding/base64"
 	"encoding/json"
 	"log"
 	"net/http"
@@ -13,75 +15,16 @@ import (
 	"github.com/golang-jwt/jwt"
 )
 
-var (
-	privateKey *rsa.PrivateKey
-	publicKey  *rsa.PublicKey
-)
-
-func generateKeyPair() {
-	var err error
-	privateKey, err = rsa.GenerateKey(rand.Reader, 2048)
-	if err != nil {
-		log.Fatalf("Error generating RSA keys: %v", err)
-	}
-	publicKey = &privateKey.PublicKey
-	log.Println("Generated new RSA key pair.")
-}
-
-// JWKSHandler serves the JWKS endpoint
-func JWKSHandler(w http.ResponseWriter, r *http.Request) {
-	jwks := map[string]interface{}{
-		"keys": []interface{}{
-			map[string]interface{}{
-				"kty": "RSA",
-				"alg": "RS256",
-				"use": "sig",
-				"n":   publicKey.N,
-				"e":   publicKey.E,
-			},
-		},
-	}
-	json.NewEncoder(w).Encode(jwks)
-}
-
-// GenerateJWTHandler generates a JWT
-func GenerateJWTHandler(w http.ResponseWriter, r *http.Request) {
-	ttlStr := os.Getenv("JWT_TTL")
-	if ttlStr == "" {
-		ttlStr = "60" // default to 60 minutes if not provided
-	}
-	ttl, err := strconv.Atoi(ttlStr)
-	if err != nil {
-		log.Fatalf("Invalid JWT_TTL value: %v", err)
-	}
-	token := jwt.NewWithClaims(jwt.SigningMethodRS256, jwt.MapClaims{
-		"iss": os.Getenv("JWT_ISSUER"),
-		"sub": os.Getenv("JWT_SUBJECT"),
-		"aud": os.Getenv("JWT_AUDIENCE"),
-		"exp": time.Now().Add(time.Duration(ttl) * time.Minute).Unix(),
-	})
-	tokenString, err := token.SignedString(privateKey)
-	if err != nil {
-		http.Error(w, "Error generating token", http.StatusInternalServerError)
-		return
-	}
-	w.Write([]byte(tokenString))
-}
-
+// main is the primary entry point for the application.
 func main() {
-	// Initial key generation
+	// Generate the initial RSA key pair for JWT signing.
 	generateKeyPair()
 
-	// Set up periodic key rotation based on TTL from environment variable
-	ttlStr := os.Getenv("JWKS_KEY_TTL")
-	if ttlStr == "" {
-		ttlStr = "60" // default to 60 minutes if not provided
-	}
-	ttl, err := strconv.Atoi(ttlStr)
-	if err != nil {
-		log.Fatalf("Invalid JWKS_KEY_TTL value: %v", err)
-	}
+	// Read the JWKS_KEY_TTL environment variable, which defines the duration (in minutes)
+	// after which a new RSA key pair should be generated.
+	ttl := getEnvInt("JWKS_KEY_TTL", 60)
 
+	// Periodically generate a new RSA key pair based on the TTL.
 	go func() {
 		for {
 			time.Sleep(time.Duration(ttl) * time.Minute)
@@ -89,9 +32,36 @@ func main() {
 		}
 	}()
 
+	// Register HTTP handlers for the JWKS and JWT generation endpoints.
 	http.HandleFunc("/.well-known/jwks.json", JWKSHandler)
 	http.HandleFunc("/generate-jwt", GenerateJWTHandler)
 
-	log.Println("Server started on :8080")
-	http.ListenAndServe(":8080", nil)
+	// Configure and start the HTTP server.
+	srv := &http.Server{
+	    Addr: ":8080",
+	    ReadTimeout: 5 * time.Second,
+	    WriteTimeout: 10 * time.Second,
+	    IdleTimeout: 15 * time.Second,
+	    Handler: nil,
+    }
+    
+    // Start server in a goroutine so it doesn't block the main thread.
+    // This allows for graceful shutdown later on.
+    go func() {
+        if err := srv.ListenAndServe(); err != http.ErrServerClosed {
+            log.Fatalf("Server ListenAndServe(): %v", err)
+        }
+    }()
+    
+    // Setup graceful shutdown: Wait for an interrupt signal, then shutdown the HTTP server.
+    stop := make(chan os.Signal, 1)
+    signal.Notify(stop, os.Interrupt)
+    <-stop
+    
+    ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+    defer cancel()
+    if err := srv.Shutdown(ctx); err != nil {
+        log.Fatalf("Server Shutdown Failed:%+v", err)
+    }
+    log.Println("Server gracefully stopped")    
 }
