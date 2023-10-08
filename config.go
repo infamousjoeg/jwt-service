@@ -9,12 +9,12 @@ import (
 // init function is automatically executed before the main function and is typically used for initialization.
 func init() {
     // Read environment variables using helper functions to retrieve and validate their values.
-    jwksRetention := getEnvInt("JWKS_RETENTION", 5, false) // Number of keys to retain.
+    jwksRetention := getEnvInt("JWKS_RETENTION", 5) // Number of keys to retain.
     jwtIssuer := getEnv("JWT_ISSUER", "", true) // Issuer of the JWT.
     jwtSubject := getEnv("JWT_SUBJECT", "", true) // Subject of the JWT.
     jwtAudience := getEnv("JWT_AUDIENCE", "", true) // Audience of the JWT.
-    jwtTTL := getEnvInt("JWT_TTL", 60, false) // Time-To-Live for the JWT.
-    jwksKeyTTL := getEnvInt("JWKS_KEY_TTL", 60, false) // Time-To-Live for the JWKS key.
+    jwtTTL := getEnvInt("JWT_TTL", 60) // Time-To-Live for the JWT.
+    jwksKeyTTL := getEnvInt("JWKS_KEY_TTL", 60) // Time-To-Live for the JWKS key.
     
     // Calculate maximum safe duration a JWT can be valid (based on the retention of keys and the key's TTL).
     // This ensures that a JWT doesn't outlive the key used to sign it.
