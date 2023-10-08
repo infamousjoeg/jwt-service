@@ -27,10 +27,6 @@ var (
 // The hash is then encoded in base64 to generate the key ID.
 func computeKeyID(pub *rsa.PublicKey) string {
 	pubASN1 := x509.MarshalPKCS1PublicKey(pub)
-	if err != nil {
-		log.Fatalf("Error encoding RSA public key: %v", err)
-	}
-
     // Create a new SHA-256 hasher.
 	hasher := sha256.New()
 	// Write the ASN1 encoding of the public key to the hasher.
