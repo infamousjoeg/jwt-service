@@ -41,15 +41,12 @@ func JWKSHandler(w http.ResponseWriter, r *http.Request) {
 // GenerateJWTHandler handles the JWT generation request.
 // It creates a new JWT and signs it using the latest private key in the keyRing.
 func GenerateJWTHandler(w http.ResponseWriter, r *http.Request) {
-	// Use the helper function to convert the JWT_TTL string to integer and determine the token's validity duration.
-	ttl := getEnvInt("JWT_TTL", 60)
-	
 	// Create a new JWT with claims.
 	token := jwt.NewWithClaims(jwt.SigningMethodRS256, jwt.MapClaims{
-		"iss": os.Getenv("JWT_ISSUER"), // Issuer
-		"sub": os.Getenv("JWT_SUBJECT"), // Subject
-		"aud": os.Getenv("JWT_AUDIENCE"), // Audience
-		"exp": time.Now().Add(time.Duration(ttl) * time.Minute).Unix(), // Expiry Time
+		"iss": jwtIssuer, // Issuer
+		"sub": jwtSubject, // Subject
+		"aud": jwtAudience, // Audience
+		"exp": time.Now().Add(time.Duration(jwtTTL) * time.Minute).Unix(), // Expiry Time
 	})
 	
 	// Set the 'kid' header to the ID of the latest key in the keyRing.

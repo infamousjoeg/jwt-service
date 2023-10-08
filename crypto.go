@@ -1,9 +1,9 @@
 package main
 
 import (
-    "crypto/rand"
     "crypto/rsa"
     "crypto/sha256"
+    "crypto/x509"
     "encoding/base64"
     "log"
     
@@ -21,13 +21,12 @@ type KeyEntry struct {
 var (
     keyRing       []KeyEntry // Slice that stores the public keys and their associated IDs.
     privateKey    *rsa.PrivateKey // RSA private key used for signing JWTs.
-    jwksRetention int // Number of keys to retain in the keyRing.
 )
 
 // computeKeyID takes an RSA public key and computes a unique key ID for it by hashing the key.
 // The hash is then encoded in base64 to generate the key ID.
 func computeKeyID(pub *rsa.PublicKey) string {
-	pubASN1, err := jwt.EncodeRSAPublicKey(pub)
+	pubASN1, err := x509.MarshalPKCS1PublicKey(pub)
 	if err != nil {
 		log.Fatalf("Error encoding RSA public key: %v", err)
 	}

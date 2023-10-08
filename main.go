@@ -20,14 +20,10 @@ func main() {
 	// Generate the initial RSA key pair for JWT signing.
 	generateKeyPair()
 
-	// Read the JWKS_KEY_TTL environment variable, which defines the duration (in minutes)
-	// after which a new RSA key pair should be generated.
-	ttl := getEnvInt("JWKS_KEY_TTL", 60)
-
 	// Periodically generate a new RSA key pair based on the TTL.
 	go func() {
 		for {
-			time.Sleep(time.Duration(ttl) * time.Minute)
+			time.Sleep(time.Duration(jwtTTL) * time.Minute)
 			generateKeyPair()
 		}
 	}()

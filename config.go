@@ -4,6 +4,15 @@ import (
     "log"
     "os"
     "strconv"
+)
+
+var (
+    jwksRetention int
+    jwtIssuer     string
+    jwtSubject    string
+    jwtAudience   string
+    jwtTTL        int
+    jwksKeyTTL    int
 ) 
 
 // init function is automatically executed before the main function and is typically used for initialization.
